@@ -1,0 +1,10 @@
+[package]
+name = "cuckoocache"
+version = "0.1.0"
+authors = ["Jeremy Rubin <j@rubin.io>"]
+edition = "2018"
+license = "MPL-2.0"
+categories = ["algorithms"]
+repository = "https://github.com/JeremyRubin/cuckoocache"
+
+[dependencies]
