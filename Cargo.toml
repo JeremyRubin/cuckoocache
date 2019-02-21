@@ -1,7 +1,7 @@
 [package]
 name = "cuckoocache"
 description = "High performance concurrent cache"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jeremy Rubin <j@rubin.io>"]
 edition = "2018"
 license = "MPL-2.0"
