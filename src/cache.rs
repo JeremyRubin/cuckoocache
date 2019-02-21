@@ -135,8 +135,8 @@ where
     fn compute_indexes(&self, es: &[u32; 8]) -> [usize; 8] {
         let mut hs = [0usize; 8];
         for (h, e) in hs.iter_mut().zip(es.iter()) {
-            *h =
-                (((((*e) as u64 & 0x00ffffffffu64) * (self.table.len() as u64)) >> 32u64) as u32) as usize;
+            *h = (((((*e) as u64 & 0x00ffffffffu64) * (self.table.len() as u64)) >> 32u64) as u32)
+                as usize;
         }
         // locations *should* be unique, but may also be non-unique with low probability
         // TODO: Analyze if it's OK to do something to guarantee they are unique (e.g.,
@@ -179,11 +179,11 @@ where
         }
         // count the number of elements from the latest epoch which
         // have not been erased.
-        let mut epoch_unused_count = 0;
-        for i in 0..self.table.len() {
-            epoch_unused_count +=
-                (self.epoch_flags.bit_is_set(i) && !self.collection_flags.bit_is_set(i)) as usize;
-        }
+        let epoch_unused_count: usize = (0..self.table.len())
+            .map(|i| {
+                (self.epoch_flags.bit_is_set(i) && !self.collection_flags.bit_is_set(i)) as usize
+            })
+            .sum();
         // If there are more non-deleted entries in the current epoch than the
         // epoch size, then allow_erase on all elements in the old epoch (marked
         // false) and move all elements in the current epoch to the old epoch
@@ -248,8 +248,7 @@ where
         // depth_limit must be at least one otherwise errors can occur.
         self.depth_limit = f64::log2(std::cmp::max(2, new_size) as f64) as u8;
         let size = std::cmp::max(2, new_size as usize);
-        self.table
-            .resize(size, std::default::Default::default());
+        self.table.resize(size, std::default::Default::default());
         self.collection_flags.setup(size);
         self.epoch_flags.setup(size);
         // Set to 45% as described above
@@ -257,6 +256,13 @@ where
         // Initially set to wait for a whole epoch
         self.epoch_heuristic_counter = self.epoch_size;
         return size;
+    }
+
+    pub fn setup_bytes(&mut self, new_size: usize) -> usize
+    where
+        Element: std::default::Default + Clone,
+    {
+        self.setup((new_size / std::mem::size_of::<Element>()) as u32)
     }
 
     /// insert loops at most depth_limit times trying to insert a hash
@@ -289,14 +295,13 @@ where
         let idxs = self.compute_indexes(&hs);
         // Make sure we have not already inserted this element
         // If we have, make sure that it does not get deleted
-        for idx in idxs.iter() {
-            if self.table[*idx] == hs {
-                self.please_keep(*idx);
-                self.epoch_flags.bit_set(*idx);
-                return;
-            }
-        }
-        self.insert_inner(hs, idxs[7], true, self.depth_limit);
+        idxs.iter()
+            .find(|&&idx| self.table[idx] == hs)
+            .map(|&idx| {
+                self.please_keep(idx);
+                self.epoch_flags.bit_set(idx);
+            })
+            .unwrap_or_else(|| self.insert_inner(hs, idxs[7], true, self.depth_limit));
     }
     fn insert_inner(&mut self, mut e: [u32; 8], last_idx: usize, last_epoch: bool, depth: u8) {
         if depth == 0 {
@@ -304,13 +309,13 @@ where
         }
         let idxs = self.compute_indexes(&e);
         // First try to insert to an empty slot, if one exists
-        for loc in idxs.iter() {
-            if !self.collection_flags.bit_is_set(*loc) {
-                continue;
-            }
-            self.table[*loc] = e;
-            self.please_keep(*loc);
-            self.epoch_flags.bit_set_to(*loc, last_epoch);
+        if let Some(&idx) = idxs
+            .iter()
+            .find(|&&idx| self.collection_flags.bit_is_set(idx))
+        {
+            self.table[idx] = e;
+            self.please_keep(idx);
+            self.epoch_flags.bit_set_to(idx, last_epoch);
             return;
         }
         /* Swap with the element at the location that was
@@ -369,20 +374,19 @@ where
     /// # Postconditions
     /// if erase is true and the element is found, then the garbage collect
     /// flag is set
-    pub fn contains(&mut self, e: &Element, erase: bool) -> bool
+    pub fn contains(&self, e: &Element, erase: bool) -> bool
     where
         Element: Eq,
     {
         let hs = self.hasher.hashes(e);
-        let locs = self.compute_indexes(&hs);
-        for loc in locs.iter() {
-            if self.table[*loc] == hs {
+        self.compute_indexes(&hs)
+            .iter()
+            .find(|&&idx| self.table[idx] == hs)
+            .map(|&idx| {
                 if erase {
-                    self.allow_erase(*loc);
+                    self.allow_erase(idx);
                 }
-                return true;
-            }
-        }
-        return false;
+            })
+            .is_some()
     }
 }

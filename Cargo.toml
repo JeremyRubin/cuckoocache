@@ -8,3 +8,8 @@ categories = ["algorithms"]
 repository = "https://github.com/JeremyRubin/cuckoocache"
 
 [dependencies]
+
+
+[dev-dependencies]
+rand = "0.5.5"
+sha2 = "0.8.0"
