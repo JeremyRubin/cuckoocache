@@ -242,8 +242,6 @@ where
     /// # Arguments
     /// * `new_size` the desired number of elements to store. It can be any u32
     pub fn setup(&mut self, new_size: u32) -> usize
-    where
-        Element: std::default::Default + Clone,
     {
         // depth_limit must be at least one otherwise errors can occur.
         self.depth_limit = f64::log2(std::cmp::max(2, new_size) as f64) as u8;
@@ -258,9 +256,8 @@ where
         return size;
     }
 
+
     pub fn setup_bytes(&mut self, new_size: usize) -> usize
-    where
-        Element: std::default::Default + Clone,
     {
         self.setup((new_size / std::mem::size_of::<Element>()) as u32)
     }
@@ -375,8 +372,6 @@ where
     /// if erase is true and the element is found, then the garbage collect
     /// flag is set
     pub fn contains(&self, e: &Element, erase: bool) -> bool
-    where
-        Element: Eq,
     {
         let hs = self.hasher.hashes(e);
         self.compute_indexes(&hs)
