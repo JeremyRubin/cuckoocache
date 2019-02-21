@@ -1,5 +1,6 @@
 [package]
 name = "cuckoocache"
+description = "High performance concurrent cache"
 version = "0.1.0"
 authors = ["Jeremy Rubin <j@rubin.io>"]
 edition = "2018"
