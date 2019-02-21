@@ -82,7 +82,7 @@ pub mod non_atomic {
     use super::*;
     type FlagType = u64;
     const WIDTH: usize = 8 * std::mem::size_of::<FlagType>();
-    const NBITS: usize = (WIDTH).trailing_zeros() as usize;
+    const NBITS: usize = 6;
     const MASK: usize = WIDTH - 1;
     pub struct Flags {
         mem: Vec<FlagType>,
@@ -127,7 +127,7 @@ pub mod atomic {
     use super::*;
     type FlagType = AtomicUsize;
     const WIDTH: usize = 8 * std::mem::size_of::<FlagType>();
-    const NBITS: usize = (WIDTH).trailing_zeros() as usize;
+    const NBITS: usize = 5 + ((WIDTH == 64) as usize);
     const MASK: usize = WIDTH - 1;
     pub struct Flags {
         mem: Vec<FlagType>,
