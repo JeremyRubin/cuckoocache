@@ -253,6 +253,7 @@ where
         self.epoch_size = std::cmp::max(1, (45 * size) / 100);
         // Initially set to wait for a whole epoch
         self.epoch_heuristic_counter = self.epoch_size;
+        self.hasher = SaltedHasher::new();
         return size;
     }
 
